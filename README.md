@@ -34,16 +34,21 @@ sudo unzip pibox.birthdays.zip
 sudo rm pibox.birthdays.zip
 ```
 
+#### Making the Telegram Group Public
+
+Make the Telegram group **public** so the bot can post messages, and note its group link (e.g., `@your_group_link`).
+
 #### Telegram Bot Configuration
 
 To enable Telegram functionality, create and configure a bot:
 
 1. Create a bot via [BotFather](https://t.me/botfather) on Telegram.
+
 2. Obtain the bot token.
 
-#### Making the Telegram Group Public
+3. Add the bot to the Telegram group.
 
-Make the Telegram group **public** so the bot can post messages, and note its group link (e.g., `@your_group_link`).
+4. Grant the bot permissions to send messages in the group.
 
 #### Running Configuration Setup
 
