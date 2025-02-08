@@ -1,17 +1,46 @@
-import os, json
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+telegram.py - Telegram Bot Management for Pi-Box Birthdays Plugin
+
+This module handles interactions with Telegram, including sending and deleting birthday videos.
+It connects to the Telegram API using Pyrogram and manages video messages within a group.
+
+Functionality:
+1. Loads bot configuration details from a JSON file.
+2. Uploads birthday greeting videos to a specified Telegram group.
+3. Deletes outdated videos to keep the group clean.
+4. Maintains a local database of sent messages for tracking purposes.
+
+Dependencies:
+- Pyrogram: For interacting with the Telegram API.
+- JSON: For handling configuration and message storage.
+- os: For file path operations.
+- datetime: For managing message timestamps.
+
+Usage:
+This module is used by `pibox.birthdays.py` to upload birthday videos and remove old ones.
+"""
+
+import os
+import json
 from pyrogram import Client
 from datetime import datetime
 
-# Global variables
+# Define base directory and configuration file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE =  os.path.join(BASE_DIR, "telegram.config")
+CONFIG_FILE = os.path.join(BASE_DIR, "telegram.config")
 DB_FILE = os.path.join(BASE_DIR, "messages.db")
 
 # Initialize the Telegram client
 bot = Client("bot")
 
 def load_config():
-    """Load configuration data from the config file."""
+    """
+    Load configuration data from the config file.
+    
+    :return: Dictionary containing configuration data.
+    """
     try:
         with open(CONFIG_FILE, "r") as file:
             return json.load(file)
@@ -25,39 +54,46 @@ if not group_link:
     raise ValueError("Group link not found in config file.")
 
 def get_all_messages():
+    """
+    Retrieves all stored messages from the local database.
+    
+    :return: List of stored message metadata.
+    """
     try:
         with open(DB_FILE, "r") as file:
-            messages = json.load(file)  # Load existing data
+            return json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
-        messages = []  # If file doesn't exist or is empty, start with an empty list
-
-    return messages
+        return []
 
 def add_message(message):
+    """
+    Adds a new message entry to the local message database.
+    
+    :param message: Telegram message object.
+    """
     messages = get_all_messages()
-
+    
     message_data = {
         "id": message.id,
         "caption": message.caption,
         "date": message.date.isoformat(),
     }
-    messages.append(message_data)  # Append new message
-
+    messages.append(message_data)
+    
     with open(DB_FILE, "w") as file:
-        json.dump(messages, file, indent=4)  # Save updated array
+        json.dump(messages, file, indent=4)
 
 def delete_old_videos(caption, date_to_keep):
     """
-    Deletes all video messages in a given Telegram group that contain a specific caption 
-    and were not sent on a specific date.
-
-    :param caption: The caption text to match for deletion.
-    :param date_to_keep: The date (YYYY-MM-DD) to keep messages.
+    Deletes old video messages in the Telegram group that match a specific caption
+    and were not sent on the specified date.
+    
+    :param caption: The caption text used to identify birthday videos.
+    :param date_to_keep: The date of the messages to retain (YYYY-MM-DD format).
     """
-
     with bot:
         messages = get_all_messages()
-        updated_messages = []  # Create a new list for messages to keep
+        updated_messages = []
         
         for message in messages:
             if message["caption"] and message["caption"].strip() == caption.strip():
@@ -65,21 +101,21 @@ def delete_old_videos(caption, date_to_keep):
                 if message_date != date_to_keep:
                     print(f"Deleting video message ID {message['id']} from {message_date}...")
                     bot.delete_messages(group_link, message["id"])
-                    continue  # Skip adding this message to updated_messages
-
-            updated_messages.append(message)  # Keep the message if it wasn't deleted
-
+                    continue  # Do not retain deleted messages
+            updated_messages.append(message)
+        
         with open(DB_FILE, "w") as file:
-            json.dump(updated_messages, file, indent=4)  # Save updated array
-
+            json.dump(updated_messages, file, indent=4)
+        
         print("Deletion process completed!")
 
 def upload_video(video_path, caption):
     """
-    Uploads a video to a Telegram group as a bot.
-
-    :param video_path: The file path of the video to upload.
-    :param caption: Optional caption for the video.
+    Uploads a video to a Telegram group with a specified caption.
+    
+    :param video_path: Path to the video file to upload.
+    :param caption: Caption text for the video.
+    :return: The sent message object.
     """
     with bot:
         message = bot.send_video(
@@ -89,6 +125,6 @@ def upload_video(video_path, caption):
             supports_streaming=True  # Enables Telegram streaming
         )
         add_message(message)
-
+    
     print("Video uploaded successfully!")
     return message

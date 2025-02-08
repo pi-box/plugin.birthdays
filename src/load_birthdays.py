@@ -1,17 +1,48 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""
+load_birthdays.py - Birthday Retrieval Module for Pi-Box Birthdays Plugin
+
+This module reads an Excel file containing a list of birthdays and identifies birthdays that match the current date.
+
+Functionality:
+1. Parses the birthday dates from an Excel file.
+2. Converts date formats into a standardized format.
+3. Identifies birthdays occurring today.
+
+Dependencies:
+- pandas: For reading and processing the Excel file.
+- datetime: For working with dates.
+
+Usage:
+This module is used by `pibox.birthdays.py` to retrieve a list of people whose birthday is today.
+"""
+
 import pandas as pd
 from datetime import datetime
 
 def parse_date(value):
+    """
+    Converts a given date string into a standardized date format.
+    
+    :param value: Date in string format (e.g., '12.05' for May 12th).
+    :return: A datetime.date object or None if conversion fails.
+    """
     try:
-        # Convert to string and split into day and month
         str_value = str(value).replace(',', '.')
         day, month = map(float, str_value.split('.'))
-        day, month = int(day), int(month)  # Convert to integers
-        return datetime(datetime.today().year, month, day).date()
+        return datetime(datetime.today().year, int(month), int(day)).date()
     except Exception:
         return None
 
-def find_birthdays_today(file_path, today):
+def find_birthdays_today(file_path, today=None):
+    """
+    Reads an Excel file and finds all names with birthdays matching today's date.
+    
+    :param file_path: Path to the Excel file containing birthday data.
+    :param today: Optional parameter for specifying a date (useful for testing).
+    :return: A list of names whose birthday is today.
+    """
     if today is None:
         today = datetime.today().date()
 
@@ -25,4 +56,3 @@ def find_birthdays_today(file_path, today):
     birthdays_today = df[df["Birthday"].apply(lambda x: x is not None and x.day == today.day and x.month == today.month)]["Name"]
     
     return birthdays_today.tolist()
-
