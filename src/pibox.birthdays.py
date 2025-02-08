@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 import os
 from datetime import datetime
@@ -8,7 +8,8 @@ import video_handler
 import telegram
 
 # Global variables
-ASSETS_DIR = "assets"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 def main():
     xlsx_path = os.path.join(ASSETS_DIR, "birthdays.xlsx")

@@ -1,11 +1,11 @@
 import os, json
-import sysconfig
 from pyrogram import Client
 from datetime import datetime
 
 # Global variables
-CONFIG_FILE = "telegram.config"
-DB_FILE = "messages.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE =  os.path.join(BASE_DIR, "telegram.config")
+DB_FILE = os.path.join(BASE_DIR, "messages.db")
 
 # Initialize the Telegram client
 bot = Client("bot")

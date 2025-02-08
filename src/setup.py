@@ -1,11 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
 import os
 import json
 import sysconfig
 from pyrogram import Client
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def main():
     BOT_FILE = "bot"
-    CONFIG_FILE = "telegram.config"
+    CONFIG_FILE = os.path.join(BASE_DIR, "telegram.config")
     
     config_data = {}
     
