@@ -1,233 +1,109 @@
-# Pi-Box Installation Guide
+# Pi-Box\_birthdays Plugin
 
-## Introduction
+Pi-Box\_birthdays is a plugin for the Pi-Box multimedia system that automates birthday greetings through the Telegram group. It retrieves birthday details from an Excel file, removes outdated videos, and uploads the relevant birthday greeting video daily.
 
-Pi-Box is a Raspberry Pi-based multimedia system designed to facilitate easy playback of media content. The system syncs videos and images from a dedicated Telegram group to a Raspberry Pi device and displays them on a connected TV in full high-definition (FHD) quality. This setup is ideal for digital signage, automated multimedia playback, or remote content management without requiring manual intervention.
+## Features
 
-The system ensures seamless synchronization by leveraging the Telegram API to fetch media files automatically. Once set up, Pi-Box can continuously loop media files on a connected screen, making it useful for businesses, presentations, or personal entertainment setups.
+- Automatically sends a birthday greeting video to a Telegram group based on an Excel list.
+- Deletes outdated birthday videos to keep the group clean.
+- Runs as a scheduled service (cron job) for full automation.
 
-## Installation Steps
+## Installation
 
-### 1. Install Raspberry Pi OS
+### Prerequisites
 
-The installation has been tested on Raspberry Pi Zero 2 W.
-
-1. Download and install [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
-2. Use the imager to flash Raspberry Pi OS (Lite recommended) onto an SD card.
-3. Insert the SD card into the Raspberry Pi and power it on.
-
-### 2. Optional: Configure WiFi Without a Computer (Temporary Hotspot)
-
-📌 **How it Works?** When the Raspberry Pi is powered on, it will check for available WiFi networks. If no known network is found, it will start a hotspot, allowing you to connect via a phone or computer and configure the WiFi. The network setup can be done using a phone by connecting to the hotspot and accessing the management interface, as described in the section [Accessing the Pi-Box User Interface](#accessing-the-pi-box-user-interface).
-
-#### Create a Connection Management Script (AutoHotspot)
-
-First, create a script to check if the device is connected to WiFi and enable the hotspot mode if not.
+Ensure your system has the required dependencies:
 
 ```bash
-sudo nano /usr/bin/autohotspot
-```
-
-Add the following script:
-
-```bash
-#!/bin/bash
-SSID="PIBOX_AP"
-PASS="12345678"
-
-# Check if connected to a network; if not, enable AP mode
-if ! iwgetid -r; then
-    echo "Not connected - enabling AP..."
-    nmcli dev wifi hotspot ifname wlan0 ssid $SSID password $PASS
-else
-    echo "Already connected to a WiFi network."
-fi
-```
-
-Save and make the script executable:
-
-```bash
-sudo chmod +x /usr/bin/autohotspot
-```
-
-#### Create a System Service for AutoHotspot
-
-To ensure the script runs at startup, create a systemd service:
-
-```bash
-sudo nano /etc/systemd/system/autohotspot.service
-```
-
-Add the following content:
-
-```ini
-[Unit]
-Description=AutoHotspot Service
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-ExecStart=/usr/bin/autohotspot
-Restart=always
-User=root
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Save and exit (`CTRL + X`, then `Y` and press `Enter`).
-
-Enable and start the service:
-
-```bash
-sudo systemctl enable autohotspot
-sudo systemctl start autohotspot
-```
-
-#### Reboot and Connect to the Hotspot
-
-Now, when the RPi boots up without an available network, it will broadcast a WiFi network named `PIBOX_AP` with the password `12345678`. You can connect to this network using your phone and access the management interface, as detailed in the section [Accessing the Pi-Box User Interface](#accessing-the-pi-box-user-interface), to configure a permanent WiFi connection.
-
-### 3. Install Required Packages
-
-Run the following commands to install essential dependencies:
-
-```bash
-sudo apt update && sudo apt upgrade -y
+sudo apt update
 sudo apt install -y python3-pip git
+sudo apt install -y ffmpeg
+sudo pip install TgCrypto pyrogram pandas pillow openpyxl
 ```
 
-### 4. Install Pi-Box Service
+### Download and Setup
 
-Clone and install the Pi-Box service:
+Navigate to the installation directory and download the plugin:
 
 ```bash
-sudo pip install git+https://github.com/pi-box/srv.git --break-system-packages
+cd /usr/local/bin/
+sudo mkdir pibox_birthdays
+cd pibox_birthdays/
+sudo wget https://github.com/pi-box/plugin.birthdays/raw/refs/heads/main/dist/pibox.birthdays.zip
+sudo unzip pibox.birthdays.zip
+sudo rm pibox.birthdays.zip
 ```
 
-### 5. Setup Telegram API Credentials
+#### Telegram Bot Configuration
 
-To enable syncing from Telegram:
+To enable Telegram functionality, create and configure a bot:
 
-1. [Go to](https://my.telegram.org/) [my.telegram.org](https://my.telegram.org/).
-2. Create a new application.
-3. Save the `api_id` and `api_hash`. These will be required in step 7.
+1. Create a bot via [BotFather](https://t.me/botfather) on Telegram.
+2. Obtain the bot token.
 
-### 6. Create a Telegram Group
+#### Making the Telegram Group Public
 
-- Create a Telegram group, preferably private.
-- Copy the group link in the format `t.me/+your_group_link_here`, as it will be required in step 7.
+Make the Telegram group **public** so the bot can post messages, and note its group link (e.g., `@your_group_link`).
 
-### 7. Run Initial Setup
+#### Running Configuration Setup
 
-Run the setup script and follow the prompts to enter the required information:
+Run the setup script to configure the bot:
 
 ```bash
-sudo setup_pibox
+sudo python3 setup.py
 ```
 
-During the setup, you will be prompted to enter:
+Follow the prompts and enter:
 
-- Your Telegram API ID
-- Your Telegram API Hash
-- Your phone number & Confirmation code sent to you
-- Your Telegram group link in the format `t.me/+your_group_link_here`
+- Telegram API ID
+- Telegram API Hash
+- Telegram Bot Token
+- Telegram Group Link
 
-Ensure that you have saved these details as noted in steps 5, 6.
+## Updating the Birthday List
 
-### 8. Configure Auto-Start Service
+The plugin uses an Excel file (`birthdays.xlsx`) located in the `assets` directory to determine birthdays. Update this file with the names and birth dates of all recipients.
 
-Create a system service to start Pi-Box on boot.
+## Running the Plugin
 
-Create a new service file:
+To manually run the plugin:
 
 ```bash
-sudo nano /etc/systemd/system/pibox.service
+sudo python3 pibox.birthdays.py
 ```
 
-Add the following content:
-
-```ini
-[Unit]
-Description=Pi-Box Service
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/pibox
-Restart=always
-User=root
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start the service:
+To automate execution, set up a cron job to run the script daily at midnight:
 
 ```bash
-sudo systemctl enable pibox
-sudo systemctl start pibox
+sudo crontab -e
 ```
 
-### 9. Install VLC
-
-VLC is required for media playback:
+Add the following line:
 
 ```bash
-sudo apt install -y vlc
+0 0 * * * /usr/bin/python3 /usr/local/bin/pibox_birthdays/pibox.birthdays.py
 ```
 
-### 10. Modify Permissions for VLC
+## Development and Packaging
 
-To allow VLC to run as a root service:
+To modify and package the plugin:
 
-```bash
-sudo sed -i 's/geteuid/getppid/' /usr/bin/vlc
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/pi-box/plugin.birthdays.git
+   ```
+2. Make changes as needed.
+3. Create a new ZIP package:
+   - On Windows: Run `compress.bat`
+   - On Linux/Mac: Run `compress.sh`
 
-### 11. Configure VLC as a System Service
+This will generate a new ZIP file in the `dist` folder, ready for deployment.
 
-Create a new service file:
+## License
 
-```bash
-sudo nano /etc/systemd/system/pibox-vlc.service
-```
+This project is open-source under the MIT License.
 
-Add the following content:
+## Support
 
-```ini
-[Unit]
-Description=Pi-Box VLC Service
-After=network.target
+For issues and contributions, visit the [GitHub repository](https://github.com/pi-box/plugin.birthdays).
 
-[Service]
-ExecStart=/bin/bash -c 'cvlc --loop --no-osd /usr/local/bin/files/*'
-Restart=always
-User=root
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start the VLC service:
-
-```bash
-sudo systemctl enable pibox-vlc
-sudo systemctl start pibox-vlc
-```
-
-## Accessing the Pi-Box User Interface
-
-You can access the Pi-Box service through its user interface when connected to the same network or WiFi:
-
-[http://pi-box.local](http://pi-box.local) (where pi-box.local is the hostname of your Raspberry Pi).
-
-From this interface, you can manually trigger synchronization or configure a WiFi network.
-
-## Conclusion
-
-You have successfully set up Pi-Box, which will now automatically sync media from Telegram and play it on your connected display. If any issues arise, check the logs using:
-
-```bash
-sudo journalctl -u pibox -f
-sudo journalctl -u pibox-vlc -f
-```
