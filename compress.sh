@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SOURCE_DIR="src"
-OUTPUT_ZIP="dist/pi-box.birthdays.zip"
+OUTPUT_ZIP="dist/pibox.birthdays.zip"
 
 # Create dist directory if it doesn't exist
 mkdir -p "dist"
