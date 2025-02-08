@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pibox_birthdays"
+version = "1.0.0"
+description = "PI-Box Birthdays Plugin"
+authors = [{name = "Moshe Waisman", email = "moshe.waisman@gmail.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+		"TgCrypto",
+    "pyrogram",
+		"pandas",
+		"pillow",
+		"openpyxl",
+]
+
+[tool.setuptools.package-data]
+"pibox_birthdays" = ["assets/**/*"]
+
+[project.scripts]
+pibox_birthdays = "pibox_birthdays.run:main"
+setup_pibox_birthdays = "pibox_birthdays.setup_pibox:main"
