@@ -11,9 +11,11 @@ Functionality:
 2. Uploads birthday greeting videos to a specified Telegram group.
 3. Deletes outdated videos to keep the group clean.
 4. Maintains a local database of sent messages for tracking purposes.
+5. Provides direct HTTP-based video upload to Telegram API.
 
 Dependencies:
 - Pyrogram: For interacting with the Telegram API.
+- requests: For direct HTTP requests to Telegram API.
 - JSON: For handling configuration and message storage.
 - os: For file path operations.
 - datetime: For managing message timestamps.
@@ -24,6 +26,7 @@ This module is used by `pibox.birthdays.py` to upload birthday videos and remove
 
 import os
 import json
+import requests
 from pyrogram import Client
 from datetime import datetime
 
@@ -31,9 +34,6 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(BASE_DIR, "telegram.config")
 DB_FILE = os.path.join(BASE_DIR, "messages.db")
-
-# Initialize the Telegram client
-bot = Client("bot")
 
 def load_config():
     """
@@ -49,9 +49,10 @@ def load_config():
         return {}
 
 config_data = load_config()
-group_link = config_data.get("group_link")
-if not group_link:
-    raise ValueError("Group link not found in config file.")
+bot_token = config_data.get("bot_token")
+group_id = config_data.get("group_id")
+if not bot_token or not group_id:
+    raise ValueError("Bot token or group ID not found in config file.")
 
 def get_all_messages():
     """
@@ -91,6 +92,7 @@ def delete_old_videos(caption, date_to_keep):
     :param caption: The caption text used to identify birthday videos.
     :param date_to_keep: The date of the messages to retain (YYYY-MM-DD format).
     """
+    bot = Client("bot")
     with bot:
         messages = get_all_messages()
         updated_messages = []
@@ -100,7 +102,7 @@ def delete_old_videos(caption, date_to_keep):
                 message_date = datetime.fromisoformat(message["date"]).date()
                 if message_date != date_to_keep:
                     print(f"Deleting video message ID {message['id']} from {message_date}...")
-                    bot.delete_messages(group_link, message["id"])
+                    bot.delete_messages(group_id, message["id"])
                     continue  # Do not retain deleted messages
             updated_messages.append(message)
         
@@ -111,20 +113,17 @@ def delete_old_videos(caption, date_to_keep):
 
 def upload_video(video_path, caption):
     """
-    Uploads a video to a Telegram group with a specified caption.
+    Uploads a video to a Telegram group using the bot API.
     
     :param video_path: Path to the video file to upload.
     :param caption: Caption text for the video.
-    :return: The sent message object.
     """
-    with bot:
-        message = bot.send_video(
-            chat_id=group_link,
-            video=video_path,
-            caption=caption,
-            supports_streaming=True  # Enables Telegram streaming
-        )
-        add_message(message)
+    url = f"https://api.telegram.org/bot{bot_token}/sendVideo"
     
-    print("Video uploaded successfully!")
-    return message
+    with open(video_path, "rb") as video_file:
+        response = requests.post(url, data={"chat_id": group_id, "caption": caption}, files={"video": video_file})
+    
+    if response.status_code == 200:
+        print("✅ הווידאו נשלח בהצלחה!")
+    else:
+        print(f"❌ שגיאה בשליחה: {response.text}")

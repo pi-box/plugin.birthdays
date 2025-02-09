@@ -35,6 +35,7 @@ def main():
         with open(CONFIG_FILE, "r") as file:
             config_data = json.load(file)
     
+    bot_token = None
     try:
         # Attempt to authenticate using an existing session file
         bot = Client(BOT_FILE)
@@ -53,16 +54,33 @@ def main():
         bot.start()
         print("Authentication successful! Session file created.")
     
-    # Request the group link if not already stored
-    if "group_link" not in config_data:
-        group_link = input("Enter your Telegram group link (e.g., @your_group_link_here): ").strip()
-        config_data.update({"group_link": group_link})
+    # save the bot token if not already stored
+    if "bot_token" not in config_data:
+        bot_token = bot_token or input("Enter your Telegram Bot Token: ").strip()
+        config_data.update({"bot_token": bot_token})
+    # Request the group ID if not already stored
+    if "group_id" not in config_data:
+        group_id = int(input("Enter your Telegram group ID: "))
+        config_data.update({"group_id": group_id})
     
     # Save configuration data to a JSON file for future use
     with open(CONFIG_FILE, "w") as file:
         json.dump(config_data, file, indent=4)
     
     print("Configuration saved successfully.")
+
+def load_config():
+    """
+    Load configuration data from the config file.
+    
+    :return: Dictionary containing configuration data.
+    """
+    try:
+        with open(CONFIG_FILE, "r") as file:
+            return json.load(file)
+    except Exception as e:
+        print(f"Error loading config file: {e}")
+        return {}
     
 if __name__ == "__main__":
     main()

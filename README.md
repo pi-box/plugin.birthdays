@@ -34,10 +34,6 @@ sudo unzip pibox.birthdays.zip
 sudo rm pibox.birthdays.zip
 ```
 
-#### Making the Telegram Group Public
-
-Make the Telegram group **public** so the bot can post messages, and note its group link (e.g., `@your_group_link`).
-
 #### Telegram Bot Configuration
 
 To enable Telegram functionality, create and configure a bot:
@@ -49,6 +45,10 @@ To enable Telegram functionality, create and configure a bot:
 3. Add the bot to the Telegram group.
 
 4. Grant the bot permissions to send messages in the group.
+
+#### Retrieve the Telegram Group ID
+
+You can find it by [accessing the Pi-Box User Interface](https://github.com/pi-box/srv/?tab=readme-ov-file#accessing-the-pi-box-user-interface), at the bottom right of the screen.
 
 #### Running Configuration Setup
 
@@ -63,7 +63,7 @@ Follow the prompts and enter:
 - Telegram API ID
 - Telegram API Hash
 - Telegram Bot Token
-- Telegram Group Link
+- Telegram Group ID
 
 ## Updating the Birthday List
 
