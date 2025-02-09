@@ -18,7 +18,7 @@ Ensure your system has the required dependencies:
 sudo apt update
 sudo apt install -y python3-pip git
 sudo apt install -y ffmpeg
-sudo pip install TgCrypto pyrogram pandas pillow openpyxl
+sudo pip install requests TgCrypto pyrogram pandas pillow openpyxl
 ```
 
 ### Download and Setup

@@ -75,9 +75,9 @@ def add_message(message):
     messages = get_all_messages()
     
     message_data = {
-        "id": message.id,
-        "caption": message.caption,
-        "date": message.date.isoformat(),
+        "id": message["message_id"],
+        "caption": message["caption"],
+        "date": datetime.fromtimestamp(message["date"]).isoformat(),
     }
     messages.append(message_data)
     
@@ -102,7 +102,9 @@ def delete_old_videos(caption, date_to_keep):
                 message_date = datetime.fromisoformat(message["date"]).date()
                 if message_date != date_to_keep:
                     print(f"Deleting video message ID {message['id']} from {message_date}...")
-                    bot.delete_messages(group_id, message["id"])
+
+                    url = f"https://api.telegram.org/bot{bot_token}/deleteMessage"
+                    requests.post(url, data={"chat_id": group_id, "message_id": message['id']})
                     continue  # Do not retain deleted messages
             updated_messages.append(message)
         
@@ -122,6 +124,9 @@ def upload_video(video_path, caption):
     
     with open(video_path, "rb") as video_file:
         response = requests.post(url, data={"chat_id": group_id, "caption": caption}, files={"video": video_file})
+        message_data = response.json()
+        if message_data.get("ok"):
+            add_message(message_data["result"])
     
     if response.status_code == 200:
         print("✅ הווידאו נשלח בהצלחה!")
